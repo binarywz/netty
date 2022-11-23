@@ -66,6 +66,12 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     /**
      * Create a new instance
+     * 1.new Socket(),通过JDK来创建底层JDK Channel
+     * 2.AbstractNioChannel():
+     *  1)AbtractChannel(),创建id/unsafe/pipeline
+     *  2)设置readInterestOp,即SelectionKey.OP_ACCEPT
+     *  3)configureBlocking(false),设置非阻塞模式
+     * 3.config=NioServerSocketChannelConfig(),tcp参数配置
      */
     public NioServerSocketChannel() {
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));

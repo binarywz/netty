@@ -83,6 +83,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent);
         this.ch = ch;
+        /**
+         * NioServerSocketChannel初始化时,
+         * readInterestOp -> SelectionKey.OP_ACCEPT
+         */
         this.readInterestOp = readInterestOp;
         try {
             ch.configureBlocking(false);

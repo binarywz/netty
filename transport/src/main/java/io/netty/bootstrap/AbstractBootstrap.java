@@ -316,7 +316,15 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            /**
+             * channelFactory -> ReflectiveChannelFactory
+             * 服务端:
+             *  channel -> NioServerSocketChannel,通过反射调用默认构造函数创建
+             */
             channel = channelFactory.newChannel();
+            /**
+             * 初始化
+             */
             init(channel);
         } catch (Throwable t) {
             if (channel != null) {

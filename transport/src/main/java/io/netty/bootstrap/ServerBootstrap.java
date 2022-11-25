@@ -137,6 +137,14 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return this;
     }
 
+    /**
+     * 初始化: 保存用户自定义属性，然后通过这些属性创建一个Acceptor，Acceptor每次accept新连接后都会使用这些属性对连接进行一些配置
+     * 1.设置options/attrs，保存用户自定义的一些属性
+     * 2.设置childOptions/childAttrs，设置子handler的一些自定义属性
+     * 3.配置服务端pipeline
+     * @param channel
+     * @throws Exception
+     */
     @Override
     void init(Channel channel) throws Exception {
         final Map<ChannelOption<?>, Object> options = options0();
@@ -166,10 +174,19 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(childAttrs.size()));
         }
 
+        /**
+         * 配置服务端pipeline
+         */
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
+                /**
+                 * b -> new ServerBootstrap()
+                 * handler -> b.handler(new LoggingHandler(LogLevel.INFO))，即用户设置的handler
+                 * handler是AbstractBoostrap的属性，ServerBootstrap/Bootstrap都有
+                 * childHandler是ServerBootstrap的属性
+                 */
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
@@ -179,6 +196,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 // In this case the initChannel(...) method will only be called after this method returns. Because
                 // of this we need to ensure we add our handler in a delayed fashion so all the users handler are
                 // placed in front of the ServerBootstrapAcceptor.
+                /**
+                 * 添加ServerBootstrapAcceptor
+                 */
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

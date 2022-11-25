@@ -334,7 +334,18 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             // as the Channel is not registered yet we need to force the usage of the GlobalEventExecutor
             return new DefaultChannelPromise(channel, GlobalEventExecutor.INSTANCE).setFailure(t);
         }
-
+        /**
+         * 创建/初始化完成后的操作是将channel注册至事件轮询其Selector上面
+         * register:456, AbstractChannel$AbstractUnsafe (io.netty.channel)
+         * register:80, SingleThreadEventLoop (io.netty.channel)
+         * register:74, SingleThreadEventLoop (io.netty.channel)
+         * register:85, MultithreadEventLoopGroup (io.netty.channel)
+         * initAndRegister:330, AbstractBootstrap (io.netty.bootstrap)
+         * doBind:281, AbstractBootstrap (io.netty.bootstrap)
+         * bind:277, AbstractBootstrap (io.netty.bootstrap)
+         * bind:252, AbstractBootstrap (io.netty.bootstrap)
+         * main:36, Server (com.imooc.netty.ch3)
+         */
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {

@@ -451,6 +451,16 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             return remoteAddress0();
         }
 
+        /**
+         * 注册事件轮询器Selector
+         * 1.绑定线程
+         * 2.register0()
+         *  2.1 doRegister() 将JDK Channel注册至事件轮询器
+         *  2.2 invokeHandlerAddedIfNeeded() -> handlerAdded()回调
+         *  2.3 fireChannelRegistered() 传播注册成功事件
+         * @param eventLoop
+         * @param promise
+         */
         @Override
         public final void register(EventLoop eventLoop, final ChannelPromise promise) {
             if (eventLoop == null) {
@@ -465,10 +475,17 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
                 return;
             }
-
+            /**
+             * 告诉Channel后续所有IO操作都由绑定的eventLoop处理
+             */
             AbstractChannel.this.eventLoop = eventLoop;
 
             if (eventLoop.inEventLoop()) {
+                /**
+                 * 实际注册
+                 * invokeHandlerAddedIfNeeded() -> handlerAdded()回调
+                 * fireChannelRegistered() 传播注册成功事件
+                 */
                 register0(promise);
             } else {
                 try {
@@ -503,9 +520,15 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+                /**
+                 * 回调handlerAdded()方法
+                 */
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
+                /**
+                 * 回调channelRegistered()方法
+                 */
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.

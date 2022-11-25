@@ -388,6 +388,14 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                /**
+                 * 将JDK Channel注册至事件轮询器
+                 * register(Selector sel, int ops, Object att)
+                 *  sel: Selector
+                 *  ops: 关心的事件，0表示不关心任何事件
+                 *  att: this->Channel，通过attachment绑定至Selector
+                 *       目的:Selector轮询至JDK Channel读写事件时可以直接获取到attachment，进一步可以针对Netty的NioChannel做一些事件传播
+                 */
                 selectionKey = javaChannel().register(eventLoop().selector, 0, this);
                 return;
             } catch (CancelledKeyException e) {

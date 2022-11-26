@@ -69,6 +69,12 @@ public final class EchoServer {
                  }
              });
 
+            /**
+             * 1.newChannel()
+             * 2.init()
+             * 3.register()
+             * 4.doBind()
+             */
             // Start the server.
             ChannelFuture f = b.bind(PORT).sync();
 

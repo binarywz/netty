@@ -369,6 +369,80 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
     abstract void init(Channel channel) throws Exception;
 
+    /**
+     * AbstractChannel.bind()
+     * 1.JDK底层Channel绑定
+     * 2.fireChannelActive() -> 完成绑定之后，传播ChannelActive事件
+     * 3.将之前注册到Selector上面的事件重新绑定为Accept事件
+     *  final int interestOps = selectionKey.interestOps();
+     *  if ((interestOps & readInterestOp) == 0) {
+     *      selectionKey.interestOps(interestOps | readInterestOp);
+     *  }
+     *
+     * doBeginRead:412, AbstractNioChannel (io.netty.channel.nio)
+     * doBeginRead:55, AbstractNioMessageChannel (io.netty.channel.nio)
+     * beginRead:769, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * read:1286, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeRead:704, AbstractChannelHandlerContext (io.netty.channel)
+     * read:684, AbstractChannelHandlerContext (io.netty.channel)
+     * read:1011, DefaultChannelPipeline (io.netty.channel)
+     * read:280, AbstractChannel (io.netty.channel)
+     * readIfIsAutoRead:1346, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * channelActive:1324, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeChannelActive:224, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelActive:210, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelActive:902, DefaultChannelPipeline (io.netty.channel)
+     * run:565, AbstractChannel$AbstractUnsafe$2 (io.netty.channel)
+     * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+     * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+     *  - Async stack trace
+     * addTask:-1, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * execute:758, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * invokeLater:931, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * bind:562, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * bind:1258, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeBind:512, AbstractChannelHandlerContext (io.netty.channel)
+     * bind:497, AbstractChannelHandlerContext (io.netty.channel)
+     * bind:980, DefaultChannelPipeline (io.netty.channel)
+     * bind:250, AbstractChannel (io.netty.channel)
+     * run:363, AbstractBootstrap$2 (io.netty.bootstrap)
+     * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+     * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+     *  - Async stack trace
+     * addTask:-1, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * execute:758, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * doBind0:359, AbstractBootstrap (io.netty.bootstrap)
+     * access$000:48, AbstractBootstrap (io.netty.bootstrap)
+     * operationComplete:308, AbstractBootstrap$1 (io.netty.bootstrap)
+     * operationComplete:295, AbstractBootstrap$1 (io.netty.bootstrap)
+     * notifyListener0:514, DefaultPromise (io.netty.util.concurrent)
+     * notifyListenersNow:488, DefaultPromise (io.netty.util.concurrent)
+     * notifyListeners:427, DefaultPromise (io.netty.util.concurrent)
+     * trySuccess:111, DefaultPromise (io.netty.util.concurrent)
+     * trySuccess:82, DefaultChannelPromise (io.netty.channel)
+     * safeSetSuccess:897, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * register0:508, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * access$200:419, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * run:478, AbstractChannel$AbstractUnsafe$1 (io.netty.channel)
+     * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+     * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+     *  - Async stack trace
+     * addTask:-1, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * execute:761, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * register:475, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * register:80, SingleThreadEventLoop (io.netty.channel)
+     * register:74, SingleThreadEventLoop (io.netty.channel)
+     * register:85, MultithreadEventLoopGroup (io.netty.channel)
+     * initAndRegister:330, AbstractBootstrap (io.netty.bootstrap)
+     * doBind:281, AbstractBootstrap (io.netty.bootstrap)
+     * bind:277, AbstractBootstrap (io.netty.bootstrap)
+     * bind:252, AbstractBootstrap (io.netty.bootstrap)
+     * main:36, Server (com.imooc.netty.ch3)
+     * @param regFuture
+     * @param channel
+     * @param localAddress
+     * @param promise
+     */
     private static void doBind0(
             final ChannelFuture regFuture, final Channel channel,
             final SocketAddress localAddress, final ChannelPromise promise) {

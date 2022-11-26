@@ -574,6 +574,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             boolean wasActive = isActive();
             try {
+                /**
+                 * JDK Channel bind
+                 */
                 doBind(localAddress);
             } catch (Throwable t) {
                 safeSetFailure(promise, t);
@@ -581,10 +584,16 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            /**
+             * 端口绑定前inactive && 端口绑定后active
+             */
             if (!wasActive && isActive()) {
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {
+                        /**
+                         * 传播ChannelActive事件
+                         */
                         pipeline.fireChannelActive();
                     }
                 });

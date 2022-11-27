@@ -70,6 +70,10 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         keysB = newKeysB;
     }
 
+    /**
+     * 每次flip会将selectedKeys清空，后续processSelectedKeys()方法会将keysA/keysB中的数据置为null
+     * @return
+     */
     SelectionKey[] flip() {
         if (isA) {
             isA = false;

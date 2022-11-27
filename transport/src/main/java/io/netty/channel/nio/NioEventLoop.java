@@ -152,6 +152,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         selectStrategy = strategy;
     }
 
+    /**
+     * 1.为当前EventLoop绑定Selector
+     * 2.保存Selector的selectedKeys
+     * @return
+     */
     private Selector openSelector() {
         final Selector selector;
         try {
@@ -453,6 +458,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 cancelledKeys = 0;
                 needsToSelectAgain = false;
                 final int ioRatio = this.ioRatio; // 控制processSelectedKeys()/runAllTasks()的执行时间
+                /**
+                 * 1.selected keySet优化: select操作每次会将就绪的事件添加到底层的HashSet的结构，netty会通过反射的
+                 *   方式将HashSet转换成数组的实现，这样在任何情况下select操作的复杂度都是O(1)
+                 *   每次select的时候，selector会将SelectionKey保存至selectedKeys
+                 * 2.processSelectedKeys() -> processSelectedKeysOptimized()处理I/O事件
+                 */
                 if (ioRatio == 100) {
                     try {
                         processSelectedKeys();
@@ -584,8 +595,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             // See https://github.com/netty/netty/issues/2363
             selectedKeys[i] = null;
 
+            /**
+             * 拿到SelectionKey绑定的attachment，即Netty Channel
+             */
             final Object a = k.attachment();
 
+            /**
+             * 处理Channel上的事件
+             */
             if (a instanceof AbstractNioChannel) {
                 processSelectedKey(k, (AbstractNioChannel) a);
             } else {
@@ -617,6 +634,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * IMPORTANT: 处理Channel上的I/O事件
+     * @param k
+     * @param ch
+     */
     private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
         final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();
         if (!k.isValid()) {

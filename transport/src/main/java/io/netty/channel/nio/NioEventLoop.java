@@ -392,9 +392,22 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         logger.info("Migrated " + nChannels + " channel(s) to the new Selector.");
     }
 
+    /**
+     * IMPORTANT: NioEventLoop执行
+     * run() -> for(;;)
+     * 1.检查是否有IO事件 -> NioEventLoop绑定一个Selector，此处即为轮询注册到Selector上面的IO事件，select()
+     * 2.处理IO事件 -> processSelectedKeys()
+     * 3.处理异步任务队列 -> runAllTasks()
+     */
     @Override
     protected void run() {
         for (;;) {
+            /**
+             * 轮询IO事件
+             * 1.deadline以及任务穿插逻辑处理
+             * 2.阻塞式select
+             * 3.避免JDK空轮询BUG
+             */
             try {
                 switch (selectStrategy.calculateStrategy(selectNowSupplier, hasTasks())) {
                     case SelectStrategy.CONTINUE:
@@ -439,7 +452,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
                 cancelledKeys = 0;
                 needsToSelectAgain = false;
-                final int ioRatio = this.ioRatio;
+                final int ioRatio = this.ioRatio; // 控制processSelectedKeys()/runAllTasks()的执行时间
                 if (ioRatio == 100) {
                     try {
                         processSelectedKeys();
@@ -733,17 +746,27 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * IMPORTANT: 解决JDK空轮询BUG
+     * 1.NioEventLoop底层有一个定时任务队列，按照任务截止时间升序排序
+     *
+     * @param oldWakenUp
+     * @throws IOException
+     */
     private void select(boolean oldWakenUp) throws IOException {
         Selector selector = this.selector;
         try {
             int selectCnt = 0;
             long currentTimeNanos = System.nanoTime();
-            long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);
+            long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos); // 计算第一个任务截止时间
             for (;;) {
+                /**
+                 * 首先计算任务是否超时，若超时&&selectCnt==0则终止任务
+                 */
                 long timeoutMillis = (selectDeadLineNanos - currentTimeNanos + 500000L) / 1000000L;
                 if (timeoutMillis <= 0) {
                     if (selectCnt == 0) {
-                        selector.selectNow();
+                        selector.selectNow(); // 非阻塞select
                         selectCnt = 1;
                     }
                     break;
@@ -759,6 +782,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     break;
                 }
 
+                /**
+                 * 阻塞select条件:
+                 * 1.任务截止时间没到
+                 * 2.任务队列为空
+                 *
+                 * timeoutMillis -> 默认为1，此处selectCnt可记录空轮询的次数
+                 */
                 int selectedKeys = selector.select(timeoutMillis);
                 selectCnt ++;
 
@@ -785,6 +815,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 }
 
                 long time = System.nanoTime();
+                /**
+                 * time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos
+                 * time - currentTimeNanos >= TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
+                 * 上面条件若成立，即没有空轮询;若不成立则表示发生了JDK空轮询，当空轮询次数大于设置阈值，Netty会进行rebuildSelector()
+                 */
                 if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) {
                     // timeoutMillis elapsed without anything selected.
                     selectCnt = 1;
@@ -796,6 +831,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                             "Selector.select() returned prematurely {} times in a row; rebuilding Selector {}.",
                             selectCnt, selector);
 
+                    /**
+                     * 1.通过openSelector()重新创建一个Selector
+                     * 2.拿到旧Selector所有的key及其attachment，attachment是Netty封装的Channel
+                     * 3.将旧Selector上面注册的JDK Channel及事件重新注册至新的Selector
+                     */
                     rebuildSelector();
                     selector = this.selector;
 

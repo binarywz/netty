@@ -764,6 +764,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         if (inEventLoop) {
             addTask(task);
         } else {
+            /**
+             * main方法会走到这里
+             * startThread()其实就是为当前EventLoop创建一个绑定的线程
+             */
             startThread();
             addTask(task);
             if (isShutdown() && removeTask(task)) {
@@ -865,10 +869,19 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     private void doStartThread() {
+        /**
+         * thread为当前EventLoop绑定的线程
+         */
         assert thread == null;
+        /**
+         * executor -> ThreadPerTaskExecutor
+         */
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                /**
+                 * 将thread与NioEventLoop进行绑定
+                 */
                 thread = Thread.currentThread();
                 if (interrupted) {
                     thread.interrupt();

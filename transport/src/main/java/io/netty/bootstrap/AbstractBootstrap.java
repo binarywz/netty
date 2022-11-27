@@ -335,7 +335,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(channel, GlobalEventExecutor.INSTANCE).setFailure(t);
         }
         /**
-         * 创建/初始化完成后的操作是将channel注册至事件轮询其Selector上面
+         * 创建/初始化完成后的操作是:
+         * 1.将Channel注册至事件轮询器Selector上面
+         * 2.为Channel绑定NioEventLoop,AbstractChannel.this.eventLoop = eventLoop
+         *
          * register:456, AbstractChannel$AbstractUnsafe (io.netty.channel)
          * register:80, SingleThreadEventLoop (io.netty.channel)
          * register:74, SingleThreadEventLoop (io.netty.channel)

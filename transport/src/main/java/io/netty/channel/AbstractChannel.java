@@ -476,6 +476,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
             /**
+             * NOTE: 为当前Channel绑定EventLoop
              * 告诉Channel后续所有IO操作都由绑定的eventLoop处理
              */
             AbstractChannel.this.eventLoop = eventLoop;

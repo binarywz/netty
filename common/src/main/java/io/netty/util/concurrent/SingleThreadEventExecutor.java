@@ -175,7 +175,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         super(parent);
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
+        /**
+         * 保存线程执行器，后续创建NioEventLoop对应底层的线程需要用到
+         */
         this.executor = ObjectUtil.checkNotNull(executor, "executor");
+        /**
+         * 用在外部线程执行Netty的任务时，若判断不是在NioEventLoop对应的线程中去执行，
+         * 塞到任务队列中，然后由NioEventLoop对应的线程去执行
+         */
         taskQueue = newTaskQueue(this.maxPendingTasks);
         rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }

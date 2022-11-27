@@ -145,6 +145,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             throw new NullPointerException("selectStrategy");
         }
         provider = selectorProvider;
+        /**
+         * 通过provider创建一个Selector，后续轮询这个注册到这个Selector上面的事件
+         */
         selector = openSelector();
         selectStrategy = strategy;
     }

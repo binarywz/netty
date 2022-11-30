@@ -194,6 +194,11 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         if (inEventLoop()) {
             scheduledTaskQueue().add(task);
         } else {
+            /**
+             * 若为外部线程操作，则同样将添加操作变为一个线程安全的操作，
+             * 即将添加定时任务封装成为一个普通任务，将其添加到MpscQueue中，
+             * 因为定时任务队列不是一个线程安全的队列，PriorityQueue<ScheduledFutureTask<?>>()
+             */
             execute(new Runnable() {
                 @Override
                 public void run() {

@@ -23,6 +23,7 @@ import io.netty.channel.SelectStrategy;
 import io.netty.channel.SingleThreadEventLoop;
 import io.netty.util.IntSupplier;
 import io.netty.util.concurrent.RejectedExecutionHandler;
+import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -248,6 +249,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         return provider;
     }
 
+    /**
+     * IMPORTANT: NioEventLoop初始化时创建MpscQueue
+     * Mpsc: Multi Producer Single Consumer，即多生产者，单消费者
+     * @param maxPendingTasks
+     * @return
+     */
     @Override
     protected Queue<Runnable> newTaskQueue(int maxPendingTasks) {
         // This event loop never calls takeTask()
@@ -478,6 +485,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     } finally {
                         // Ensure we always run tasks.
                         final long ioTime = System.nanoTime() - ioStartTime;
+                        /**
+                         * timeoutNanos -> 执行时间不能超过这个时间
+                         */
                         runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
                 }
@@ -766,6 +776,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 selector.wakeup();
             }
         }
+    }
+
+    @Override
+    public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+        return super.schedule(callable, delay, unit);
     }
 
     /**

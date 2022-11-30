@@ -291,8 +291,15 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
     }
 
+    /**
+     * 定时任务聚合
+     * @return
+     */
     private boolean fetchFromScheduledTaskQueue() {
         long nanoTime = AbstractScheduledEventExecutor.nanoTime();
+        /**
+         * 从定时任务队列中取一个任务
+         */
         Runnable scheduledTask  = pollScheduledTask(nanoTime);
         while (scheduledTask != null) {
             if (!taskQueue.offer(scheduledTask)) {
@@ -407,11 +414,20 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     /**
+     * IMPORTANT
+     * 1.从定时任务队列中聚合任务
+     * 2.执行任务
      * Poll all tasks from the task queue and run them via {@link Runnable#run()} method.  This method stops running
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
+        /**
+         * 聚合定时任务队列中的任务
+         */
         fetchFromScheduledTaskQueue();
+        /**
+         * 从MpscQueue中取一个任务
+         */
         Runnable task = pollTask();
         if (task == null) {
             afterRunningAllTasks();
@@ -428,6 +444,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
+            /**
+             * 每执行64个任务判断一下是否超时
+             */
             if ((runTasks & 0x3F) == 0) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 if (lastExecutionTime >= deadline) {
@@ -441,7 +460,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 break;
             }
         }
-
+        /**
+         * 任务收尾工作
+         */
         afterRunningAllTasks();
         this.lastExecutionTime = lastExecutionTime;
         return true;

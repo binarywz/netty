@@ -61,9 +61,12 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
         @Override
         public void read() {
+            // 首先判断是否为当前EventLoop，即是否为当前线程
             assert eventLoop().inEventLoop();
+            // config/pipeline为服务端Channel的属性
             final ChannelConfig config = config();
             final ChannelPipeline pipeline = pipeline();
+            // 处理服务端接收速率
             final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
             allocHandle.reset(config);
 
@@ -72,6 +75,13 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        /**
+                         * 通过服务端底层JDK Channel accept()方法创建客户端JDK Channel
+                         * SocketChannel ch = javaChannel().accept();
+                         *
+                         * readBuf -> 服务端Channel MessageUnsafe对应的一个field，用来临时保存读到的连接NioSocketChannel
+                         * buf.add(new NioSocketChannel(this, ch));
+                         */
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;

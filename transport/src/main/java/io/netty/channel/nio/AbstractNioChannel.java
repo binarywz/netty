@@ -82,6 +82,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent);
+        /**
+         * ch -> JDK Channel
+         */
         this.ch = ch;
         /**
          * NioServerSocketChannel初始化时,
@@ -89,6 +92,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
          */
         this.readInterestOp = readInterestOp;
         try {
+            /**
+             * 配置非阻塞模式
+             */
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {

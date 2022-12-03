@@ -157,6 +157,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
             if (ch != null) {
                 /**
                  * 将SocketChannel封装成Netty NioSocketChannel
+                 * this -> NioServerSocketChannel，服务端Channel
+                 * ch -> SocketChannel，即JDK Channel
                  */
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;

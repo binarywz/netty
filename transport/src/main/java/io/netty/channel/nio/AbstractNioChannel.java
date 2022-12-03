@@ -45,6 +45,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract base class for {@link Channel} implementations which use a Selector based approach.
+ * AbstractNioMessageChannel -> NioServerSocketChannel/NioMessageUnsafe -> SelectionKey.OP_ACCEPT
+ * AbstractNioByteChannel -> NioSocketChannel/NioByteUnsafe -> SelectionKey.OP_READ
+ *
+ * AbstractNioChannel关注I/O事件，维护select()
  */
 public abstract class AbstractNioChannel extends AbstractChannel {
 
@@ -54,6 +58,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     private static final ClosedChannelException DO_CLOSE_CLOSED_CHANNEL_EXCEPTION = ThrowableUtil.unknownStackTrace(
             new ClosedChannelException(), AbstractNioChannel.class, "doClose()");
 
+    /**
+     * ch -> 服务端/客户端JDK Channel
+     */
     private final SelectableChannel ch;
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;

@@ -323,7 +323,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
              */
             channel = channelFactory.newChannel();
             /**
-             * 初始化
+             * IMPORTANT: 初始化
              */
             init(channel);
         } catch (Throwable t) {

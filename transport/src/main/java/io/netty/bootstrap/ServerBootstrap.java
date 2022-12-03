@@ -254,8 +254,18 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             final Channel child = (Channel) msg;
 
+            /**
+             * childHandler -> ChannelInitializer.handlerAdded()
+             * handlerAdded()执行childHandler的initChannel()，即用户自定义的处理过程
+             */
             child.pipeline().addLast(childHandler);
 
+            /**
+             * pipeline.addLast(new ServerBootstrapAcceptor(
+             *   currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
+             * childOptions -> currentChildOptions
+             * childAttrs -> currentChildAttrs
+             */
             for (Entry<ChannelOption<?>, Object> e: childOptions) {
                 try {
                     if (!child.config().setOption((ChannelOption<Object>) e.getKey(), e.getValue())) {
@@ -270,6 +280,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 child.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());
             }
 
+            /**
+             * 绑定EventLoop/注册Selector
+             */
             try {
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override

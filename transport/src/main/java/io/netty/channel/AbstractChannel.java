@@ -518,6 +518,11 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                /**
+                 * 1.为连接注册Selector
+                 * 2.将Netty Channel当作attachment
+                 * - 目的:Selector轮询至JDK Channel读写事件时可以直接获取到attachment，进一步可以针对Netty的NioChannel做一些事件传播
+                 */
                 doRegister();
                 neverRegistered = false;
                 registered = true;

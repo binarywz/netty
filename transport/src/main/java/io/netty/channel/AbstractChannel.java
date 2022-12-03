@@ -543,6 +543,58 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 // multiple channel actives if the channel is deregistered and re-registered.
                 if (isActive()) {
                     if (firstRegistration) {
+                        /**
+                         * IMPORTANT: Channel注册事件
+                         * 服务端Channel interestOps=SelectionKey.OP_ACCEPT
+                         * 客户端Channel interestOps=SelectionKey.OP_READ
+                         *
+                         * stack
+                         * doBeginRead:412, AbstractNioChannel (io.netty.channel.nio)
+                         * beginRead:769, AbstractChannel$AbstractUnsafe (io.netty.channel)
+                         * read:1286, DefaultChannelPipeline$HeadContext (io.netty.channel)
+                         * invokeRead:704, AbstractChannelHandlerContext (io.netty.channel)
+                         * read:684, AbstractChannelHandlerContext (io.netty.channel)
+                         * read:1011, DefaultChannelPipeline (io.netty.channel)
+                         * read:280, AbstractChannel (io.netty.channel)
+                         * readIfIsAutoRead:1346, DefaultChannelPipeline$HeadContext (io.netty.channel)
+                         * channelActive:1324, DefaultChannelPipeline$HeadContext (io.netty.channel)
+                         * invokeChannelActive:224, AbstractChannelHandlerContext (io.netty.channel)
+                         * invokeChannelActive:210, AbstractChannelHandlerContext (io.netty.channel)
+                         * fireChannelActive:902, DefaultChannelPipeline (io.netty.channel)
+                         * register0:514, AbstractChannel$AbstractUnsafe (io.netty.channel)
+                         * access$200:419, AbstractChannel$AbstractUnsafe (io.netty.channel)
+                         * run:478, AbstractChannel$AbstractUnsafe$1 (io.netty.channel)
+                         * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+                         * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+                         *  - Async stack trace
+                         * addTask:-1, SingleThreadEventExecutor (io.netty.util.concurrent)
+                         * execute:761, SingleThreadEventExecutor (io.netty.util.concurrent)
+                         * register:475, AbstractChannel$AbstractUnsafe (io.netty.channel)
+                         * register:80, SingleThreadEventLoop (io.netty.channel)
+                         * register:74, SingleThreadEventLoop (io.netty.channel)
+                         * register:85, MultithreadEventLoopGroup (io.netty.channel)
+                         * channelRead:254, ServerBootstrap$ServerBootstrapAcceptor (io.netty.bootstrap)
+                         * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+                         * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+                         * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+                         * channelRead:86, ChannelInboundHandlerAdapter (io.netty.channel)
+                         * channelRead:26, ServerHandler (com.imooc.netty.ch3)
+                         * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+                         * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+                         * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+                         * channelRead:1334, DefaultChannelPipeline$HeadContext (io.netty.channel)
+                         * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+                         * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+                         * fireChannelRead:926, DefaultChannelPipeline (io.netty.channel)
+                         * read:93, AbstractNioMessageChannel$NioMessageUnsafe (io.netty.channel.nio)
+                         * processSelectedKey:651, NioEventLoop (io.netty.channel.nio)
+                         * processSelectedKeysOptimized:574, NioEventLoop (io.netty.channel.nio)
+                         * processSelectedKeys:488, NioEventLoop (io.netty.channel.nio)
+                         * run:450, NioEventLoop (io.netty.channel.nio)
+                         * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+                         * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+                         * run:748, Thread (java.lang)
+                         */
                         pipeline.fireChannelActive();
                     } else if (config().isAutoRead()) {
                         // This channel was registered before and autoRead() is set. This means we need to begin read

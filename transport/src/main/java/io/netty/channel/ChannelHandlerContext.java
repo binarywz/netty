@@ -121,16 +121,23 @@ import java.nio.channels.Channels;
  * {@link ChannelPipeline} to find out more about inbound and outbound operations,
  * what fundamental differences they have, how they flow in a  pipeline,  and how to handle
  * the operation in your application.
+ *
+ * 默认实现为: AbstractChannelHandlerContext
+ * 1.AttributeMap: 每个ChannelHandlerContext都可以存储自定义的属性
+ * 2.ChannelInboundInvoker: 传播入站事件
+ * 3.ChannelOutboundInvoker: 传播出站事件
  */
 public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvoker, ChannelOutboundInvoker {
 
     /**
      * Return the {@link Channel} which is bound to the {@link ChannelHandlerContext}.
+     * Pipeline中的每一个节点都要知道当前节点属于哪一个Channel
      */
     Channel channel();
 
     /**
      * Returns the {@link EventExecutor} which is used to execute an arbitrary task.
+     * 获取执行当前节点的NioEventLoop
      */
     EventExecutor executor();
 
@@ -138,11 +145,13 @@ public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvok
      * The unique name of the {@link ChannelHandlerContext}.The name was used when then {@link ChannelHandler}
      * was added to the {@link ChannelPipeline}. This name can also be used to access the registered
      * {@link ChannelHandler} from the {@link ChannelPipeline}.
+     * 节点处理器对应的名称
      */
     String name();
 
     /**
      * The {@link ChannelHandler} that is bound this {@link ChannelHandlerContext}.
+     * 当前节点对应的业务逻辑处理器
      */
     ChannelHandler handler();
 

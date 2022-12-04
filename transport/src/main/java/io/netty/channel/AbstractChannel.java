@@ -70,7 +70,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     /**
      * Creates a new instance.
-     *
+     * IMPORTANT: 创建Unsafe与Pipeline
+     * 服务端/客户端Channel都会调用AbstractChannel构造函数
      * @param parent
      *        the parent of this channel. {@code null} if there's no parent.
      */
@@ -81,6 +82,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         this.parent = parent;
         id = newId();
         unsafe = newUnsafe();
+        /**
+         * 创建Channel对应的Pipeline，Channel与Pipeline是一对一的关系
+         */
         pipeline = newChannelPipeline();
     }
 
@@ -114,6 +118,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      * Returns a new {@link DefaultChannelPipeline} instance.
      */
     protected DefaultChannelPipeline newChannelPipeline() {
+        /**
+         * this -> Channel
+         */
         return new DefaultChannelPipeline(this);
     }
 

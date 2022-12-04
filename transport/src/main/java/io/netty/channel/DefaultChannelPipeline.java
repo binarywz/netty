@@ -1320,7 +1320,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             ctx.fireChannelActive();
-
+            /**
+             * 连接建立成功之后会调用channelActive()方法，默认情况下在此注册读事件
+             */
             readIfIsAutoRead();
         }
 

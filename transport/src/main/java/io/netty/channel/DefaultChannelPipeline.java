@@ -192,12 +192,71 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return addLast(null, name, handler);
     }
 
+    /**
+     * IMPORTANT: channel pipeline添加节点
+     * 1.判断是否重复添加
+     * 2.创建节点，并添加至链表
+     * 3.回调添加完成函数
+     * - ChannelInitializer.handlerAdded() -> 添加用户自定义Handler，并将自身删除
+     *
+     * stack
+     * initChannel:15, ClientChannelInitializer (com.imooc.netty.ch3)
+     * initChannel:12, ClientChannelInitializer (com.imooc.netty.ch3)
+     * initChannel:113, ChannelInitializer (io.netty.channel)
+     * handlerAdded:105, ChannelInitializer (io.netty.channel)
+     * callHandlerAdded0:597, DefaultChannelPipeline (io.netty.channel)
+     * access$000:44, DefaultChannelPipeline (io.netty.channel)
+     * execute:1387, DefaultChannelPipeline$PendingHandlerAddedTask (io.netty.channel)
+     * callHandlerAddedForAllHandlers:1122, DefaultChannelPipeline (io.netty.channel)
+     * invokeHandlerAddedIfNeeded:647, DefaultChannelPipeline (io.netty.channel)
+     * register0:506, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * access$200:419, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * run:478, AbstractChannel$AbstractUnsafe$1 (io.netty.channel)
+     * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+     * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+     *  - Async stack trace
+     * addTask:-1, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * execute:761, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * register:475, AbstractChannel$AbstractUnsafe (io.netty.channel)
+     * register:80, SingleThreadEventLoop (io.netty.channel)
+     * register:74, SingleThreadEventLoop (io.netty.channel)
+     * register:85, MultithreadEventLoopGroup (io.netty.channel)
+     * channelRead:254, ServerBootstrap$ServerBootstrapAcceptor (io.netty.bootstrap)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+     * channelRead:86, ChannelInboundHandlerAdapter (io.netty.channel)
+     * channelRead:26, ServerHandler (com.imooc.netty.ch3)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+     * channelRead:1334, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:926, DefaultChannelPipeline (io.netty.channel)
+     * read:93, AbstractNioMessageChannel$NioMessageUnsafe (io.netty.channel.nio)
+     * processSelectedKey:651, NioEventLoop (io.netty.channel.nio)
+     * processSelectedKeysOptimized:574, NioEventLoop (io.netty.channel.nio)
+     * processSelectedKeys:488, NioEventLoop (io.netty.channel.nio)
+     * run:450, NioEventLoop (io.netty.channel.nio)
+     * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+     * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+     * run:748, Thread (java.lang)
+     * @param group    the {@link EventExecutorGroup} which will be used to execute the {@link ChannelHandler}
+     *                 methods
+     * @param name     the name of the handler to append
+     * @param handler  the handler to append
+     *
+     * @return
+     */
     @Override
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
+            // 1.判断是否重复添加
             checkMultiplicity(handler);
 
+            // 2.创建节点，并添加至链表
             newCtx = newContext(group, filterName(name, handler), handler);
 
             addLast0(newCtx);
@@ -211,6 +270,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return this;
             }
 
+            // 3.回调添加完成函数
             EventExecutor executor = newCtx.executor();
             if (!executor.inEventLoop()) {
                 newCtx.setAddPending();
@@ -223,6 +283,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return this;
             }
         }
+        // 3.回调添加完成函数
         callHandlerAdded0(newCtx);
         return this;
     }
@@ -592,8 +653,16 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+    /**
+     * 添加完成回调函数
+     * 触发ChannelInitializer#handlerAdded(ChannelHandlerContext)，即用户自定义ChannelInitializer
+     * @param ctx
+     */
     private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
         try {
+            /**
+             * 传播添加完成事件
+             */
             ctx.handler().handlerAdded(ctx);
             ctx.setAddComplete();
         } catch (Throwable t) {

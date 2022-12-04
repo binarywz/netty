@@ -990,6 +990,26 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    /**
+     * IMPORTANT: 传播ChannelRead事件，ctx.channel().pipeline().fireChannelRead()
+     * 从Head节点开始传播，Tail节点负责释放数据 -> ReferenceCountUtil.release(msg);
+     *
+     * channelRead:12, InBoundHandlerC (com.imooc.netty.ch6)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+     * channelRead:14, InBoundHandlerA (com.imooc.netty.ch6)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+     * channelRead:1334, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:926, DefaultChannelPipeline (io.netty.channel)
+     * channelActive:18, InBoundHandlerB (com.imooc.netty.ch6)
+     * @param msg
+     * @return
+     */
     @Override
     public final ChannelPipeline fireChannelRead(Object msg) {
         AbstractChannelHandlerContext.invokeChannelRead(head, msg);

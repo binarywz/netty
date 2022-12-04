@@ -181,12 +181,14 @@ public interface ChannelHandler {
 
     /**
      * Gets called after the {@link ChannelHandler} was added to the actual context and it's ready to handle events.
+     * handler被添加到pipeline中之后的回调
      */
     void handlerAdded(ChannelHandlerContext ctx) throws Exception;
 
     /**
      * Gets called after the {@link ChannelHandler} was removed from the actual context and it doesn't handle events
      * anymore.
+     * handler从pipeline中删除之后的回调
      */
     void handlerRemoved(ChannelHandlerContext ctx) throws Exception;
 

@@ -1101,6 +1101,27 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    /**
+     * IMPORTANT: write事件
+     * ctx.channel().write("hello world") -> 从Tail节点往前写
+     *
+     * stack
+     * write:1017, DefaultChannelPipeline (io.netty.channel)
+     * write:286, AbstractChannel (io.netty.channel)
+     * lambda$handlerAdded$0:23, OutBoundHandlerB (com.imooc.netty.ch6)
+     * run:-1, 337426669 (com.imooc.netty.ch6.OutBoundHandlerB$$Lambda$2)
+     * call:38, PromiseTask$RunnableAdapter (io.netty.util.concurrent)
+     * run:120, ScheduledFutureTask (io.netty.util.concurrent)
+     * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+     * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+     * runAllTasks:418, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * run:454, NioEventLoop (io.netty.channel.nio)
+     * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+     * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+     * run:748, Thread (java.lang)
+     * @param msg
+     * @return
+     */
     @Override
     public final ChannelFuture write(Object msg) {
         return tail.write(msg);

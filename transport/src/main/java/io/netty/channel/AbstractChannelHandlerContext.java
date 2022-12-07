@@ -831,6 +831,30 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
         }
     }
 
+    /**
+     * IMPORTANT: write事件
+     *
+     * stack
+     * write:820, AbstractChannelHandlerContext (io.netty.channel)
+     * write:734, AbstractChannelHandlerContext (io.netty.channel)
+     * write:715, AbstractChannelHandlerContext (io.netty.channel)
+     * write:1017, DefaultChannelPipeline (io.netty.channel)
+     * write:286, AbstractChannel (io.netty.channel)
+     * lambda$handlerAdded$0:23, OutBoundHandlerB (com.imooc.netty.ch6)
+     * run:-1, 337426669 (com.imooc.netty.ch6.OutBoundHandlerB$$Lambda$2)
+     * call:38, PromiseTask$RunnableAdapter (io.netty.util.concurrent)
+     * run:120, ScheduledFutureTask (io.netty.util.concurrent)
+     * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+     * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+     * runAllTasks:418, SingleThreadEventExecutor (io.netty.util.concurrent)
+     * run:454, NioEventLoop (io.netty.channel.nio)
+     * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+     * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+     * run:748, Thread (java.lang)
+     * @param msg
+     * @param flush
+     * @param promise
+     */
     private void write(Object msg, boolean flush, ChannelPromise promise) {
         AbstractChannelHandlerContext next = findContextOutbound();
         final Object m = pipeline.touch(msg, next);
@@ -839,6 +863,30 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
             if (flush) {
                 next.invokeWriteAndFlush(m, promise);
             } else {
+                /**
+                 * 回调用户Handler Write()方法
+                 *
+                 * stack
+                 * write:14, OutBoundHandlerC (com.imooc.netty.ch6)
+                 * invokeWrite0:749, AbstractChannelHandlerContext (io.netty.channel)
+                 * invokeWrite:741, AbstractChannelHandlerContext (io.netty.channel)
+                 * write:827, AbstractChannelHandlerContext (io.netty.channel)
+                 * write:734, AbstractChannelHandlerContext (io.netty.channel)
+                 * write:715, AbstractChannelHandlerContext (io.netty.channel)
+                 * write:1017, DefaultChannelPipeline (io.netty.channel)
+                 * write:286, AbstractChannel (io.netty.channel)
+                 * lambda$handlerAdded$0:23, OutBoundHandlerB (com.imooc.netty.ch6)
+                 * run:-1, 337426669 (com.imooc.netty.ch6.OutBoundHandlerB$$Lambda$2)
+                 * call:38, PromiseTask$RunnableAdapter (io.netty.util.concurrent)
+                 * run:120, ScheduledFutureTask (io.netty.util.concurrent)
+                 * safeExecute$$$capture:163, AbstractEventExecutor (io.netty.util.concurrent)
+                 * safeExecute:-1, AbstractEventExecutor (io.netty.util.concurrent)
+                 * runAllTasks:418, SingleThreadEventExecutor (io.netty.util.concurrent)
+                 * run:454, NioEventLoop (io.netty.channel.nio)
+                 * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+                 * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+                 * run:748, Thread (java.lang)
+                 */
                 next.invokeWrite(m, promise);
             }
         } else {
@@ -965,6 +1013,10 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
         return ctx;
     }
 
+    /**
+     * 查找Pipeline中的OutboundChannelHandlerContext节点
+     * @return
+     */
     private AbstractChannelHandlerContext findContextOutbound() {
         AbstractChannelHandlerContext ctx = this;
         do {

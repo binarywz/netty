@@ -233,9 +233,36 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
      */
     protected void handlerRemoved0(ChannelHandlerContext ctx) throws Exception { }
 
+    /**
+     * ByteToMessage
+     *
+     * 处理IO事件stack，具体见{@link io.netty.channel.nio.NioEventLoop#processSelectedKeys()}
+     * channelRead:256, ByteToMessageDecoder (io.netty.handler.codec)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+     * channelRead:1334, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:926, DefaultChannelPipeline (io.netty.channel)
+     * read:129, AbstractNioByteChannel$NioByteUnsafe (io.netty.channel.nio)
+     * processSelectedKey:651, NioEventLoop (io.netty.channel.nio)
+     * processSelectedKeysOptimized:574, NioEventLoop (io.netty.channel.nio)
+     * processSelectedKeys:488, NioEventLoop (io.netty.channel.nio)
+     * run:450, NioEventLoop (io.netty.channel.nio)
+     * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+     * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+     * run:748, Thread (java.lang)
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof ByteBuf) {
+            /**
+             * 可简单看作ArrayList，callDecode时会将解析之后的数据都放在out里
+             */
             CodecOutputList out = CodecOutputList.newInstance();
             try {
                 ByteBuf data = (ByteBuf) msg;

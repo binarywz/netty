@@ -409,7 +409,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
      * run() -> for(;;)
      * 1.检查是否有IO事件 -> NioEventLoop绑定一个Selector，此处即为轮询注册到Selector上面的IO事件，select()
      * 2.处理IO事件 -> processSelectedKeys()
-     * 3.处理异步任务队列 -> runAllTasks()
+     * 3.处理异步任务队列 -> runAllTasks()，如NioEventLoop绑定Channel
      */
     @Override
     protected void run() {

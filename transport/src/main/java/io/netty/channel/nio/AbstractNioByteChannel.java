@@ -170,6 +170,9 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
             }
 
             if (msg instanceof ByteBuf) {
+                /**
+                 * 3.调用JDK底层API进行自旋写
+                 */
                 ByteBuf buf = (ByteBuf) msg;
                 int readableBytes = buf.readableBytes();
                 if (readableBytes == 0) {

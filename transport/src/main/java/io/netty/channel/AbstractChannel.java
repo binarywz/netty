@@ -16,6 +16,8 @@
 package io.netty.channel;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.nio.AbstractNioByteChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.DefaultAttributeMap;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.PlatformDependent;
@@ -301,6 +303,41 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         return pipeline.write(msg, promise);
     }
 
+    /**
+     * IMPORTANT: writeAndFlush入口
+     *
+     * stack
+     * flush:1296, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeFlush0:787, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeFlush:779, AbstractChannelHandlerContext (io.netty.channel)
+     * flush:760, AbstractChannelHandlerContext (io.netty.channel)
+     * flush:115, ChannelOutboundHandlerAdapter (io.netty.channel)
+     * invokeFlush0:787, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeWriteAndFlush:813, AbstractChannelHandlerContext (io.netty.channel)
+     * write:825, AbstractChannelHandlerContext (io.netty.channel)
+     * writeAndFlush:805, AbstractChannelHandlerContext (io.netty.channel)
+     * writeAndFlush:842, AbstractChannelHandlerContext (io.netty.channel)
+     * writeAndFlush:1032, DefaultChannelPipeline (io.netty.channel)
+     * writeAndFlush:296, AbstractChannel (io.netty.channel)
+     * channelRead:13, BizHandler (com.imooc.netty.ch9) -> 此处调用ctx.channel().writeAndFlush(user)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:351, AbstractChannelHandlerContext (io.netty.channel)
+     * channelRead:1334, DefaultChannelPipeline$HeadContext (io.netty.channel)
+     * invokeChannelRead:373, AbstractChannelHandlerContext (io.netty.channel)
+     * invokeChannelRead:359, AbstractChannelHandlerContext (io.netty.channel)
+     * fireChannelRead:926, DefaultChannelPipeline (io.netty.channel)
+     * read:129, AbstractNioByteChannel$NioByteUnsafe (io.netty.channel.nio)
+     * processSelectedKey:651, NioEventLoop (io.netty.channel.nio)
+     * processSelectedKeysOptimized:574, NioEventLoop (io.netty.channel.nio)
+     * processSelectedKeys:488, NioEventLoop (io.netty.channel.nio)
+     * run:450, NioEventLoop (io.netty.channel.nio)
+     * run:873, SingleThreadEventExecutor$5 (io.netty.util.concurrent)
+     * run:144, DefaultThreadFactory$DefaultRunnableDecorator (io.netty.util.concurrent)
+     * run:748, Thread (java.lang)
+     * @param msg
+     * @return
+     */
     @Override
     public ChannelFuture writeAndFlush(Object msg) {
         return pipeline.writeAndFlush(msg);
@@ -878,10 +915,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
         }
 
+        /**
+         * IMPORTANT: 写Buffer队列
+         * @param msg
+         * @param promise
+         */
         @Override
         public final void write(Object msg, ChannelPromise promise) {
             assertEventLoop();
 
+            /**
+             * 缓冲写入的ByteBuf
+             */
             ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
             if (outboundBuffer == null) {
                 // If the outboundBuffer is null we know the channel was closed and so
@@ -896,6 +941,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             int size;
             try {
+                /**
+                 * 1.Direct化ByteBuf
+                 * 具体逻辑见{@link io.netty.channel.nio.AbstractNioByteChannel#filterOutboundMessage(java.lang.Object)}
+                 */
                 msg = filterOutboundMessage(msg);
                 size = pipeline.estimatorHandle().size(msg);
                 if (size < 0) {
@@ -907,9 +956,19 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            /**
+             * 2.插入写队列，主要是维护一些指针
+             * Entry(flushedEntry) --> ... Entry(unflushedEntry) --> ... Entry(tailEntry)
+             * 具体逻辑见 {@link ChannelOutboundBuffer#addMessage(java.lang.Object, int, io.netty.channel.ChannelPromise)}
+             * 3.设置写状态
+             * 具体逻辑见 {@link ChannelOutboundBuffer#incrementPendingOutboundBytes(long, boolean)}
+             */
             outboundBuffer.addMessage(msg, size, promise);
         }
 
+        /**
+         * IMPORTANT: 刷新buffer队列
+         */
         @Override
         public final void flush() {
             assertEventLoop();
@@ -919,7 +978,20 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            /**
+             * 1.添加刷新标志并设置写状态
+             * 具体逻辑见 {@link ChannelOutboundBuffer#addFlush()}
+             * 设置写状态逻辑见 {@link ChannelOutboundBuffer#decrementPendingOutboundBytes(long, boolean, boolean)}
+             */
             outboundBuffer.addFlush();
+            /**
+             * 2.遍历buffer队列，过滤ByteBuf
+             * 3.调用JDK底层API进行自旋写
+             * 主要逻辑见 {@link AbstractNioByteChannel#doWrite(io.netty.channel.ChannelOutboundBuffer)}
+             * 调用JDK底层写逻辑见 {@link NioSocketChannel#doWriteBytes(io.netty.buffer.ByteBuf)}
+             * {@link PooledDirectByteBuf#readBytes(java.nio.channels.GatheringByteChannel, int)}
+             * {@link PooledDirectByteBuf#getBytes(int, java.nio.channels.GatheringByteChannel, int, boolean)}
+             */
             flush0();
         }
 

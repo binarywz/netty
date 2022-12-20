@@ -30,6 +30,9 @@ package io.netty.channel;
  */
 public final class WriteBufferWaterMark {
 
+    /**
+     * 写队列高低水位
+     */
     private static final int DEFAULT_LOW_WATER_MARK = 32 * 1024;
     private static final int DEFAULT_HIGH_WATER_MARK = 64 * 1024;
 

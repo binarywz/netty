@@ -174,8 +174,11 @@ public final class ChannelOutboundBuffer {
             return;
         }
 
+        // TOTAL_PENDING_SIZE_UPDATER: 缓存区中待写入的字节
         long newWriteBufferSize = TOTAL_PENDING_SIZE_UPDATER.addAndGet(this, size);
+        // 判断是否大于高水位值
         if (newWriteBufferSize > channel.config().getWriteBufferHighWaterMark()) {
+            // 设置不可写
             setUnwritable(invokeLater);
         }
     }
@@ -559,12 +562,18 @@ public final class ChannelOutboundBuffer {
         }
     }
 
+    /**
+     * 超过高水位则设置不可写状态
+     * 自旋锁+CAS
+     * @param invokeLater
+     */
     private void setUnwritable(boolean invokeLater) {
         for (;;) {
             final int oldValue = unwritable;
             final int newValue = oldValue | 1;
             if (UNWRITABLE_UPDATER.compareAndSet(this, oldValue, newValue)) {
                 if (oldValue == 0 && newValue != 0) {
+                    // 通过pipeline传播至ChannelHandler中，ChannelHandler会判断当前不能写
                     fireChannelWritabilityChanged(invokeLater);
                 }
                 break;

@@ -917,6 +917,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
         /**
          * IMPORTANT: 写Buffer队列
+         * - Direct化ByteBuf
+         * - 插入写队列
+         * - 设置写状态
          * @param msg
          * @param promise
          */
@@ -959,6 +962,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             /**
              * 2.插入写队列，主要是维护一些指针
              * Entry(flushedEntry) --> ... Entry(unflushedEntry) --> ... Entry(tailEntry)
+             * - flushedEntry: 队列中第一个被flush过的Entry
+             * - unflushedEntry: 队列中第一个没有被flush过的Entry
+             * - tailEntry: 队列中最后一个Entry
              * 具体逻辑见 {@link ChannelOutboundBuffer#addMessage(java.lang.Object, int, io.netty.channel.ChannelPromise)}
              * 3.设置写状态
              * 具体逻辑见 {@link ChannelOutboundBuffer#incrementPendingOutboundBytes(long, boolean)}

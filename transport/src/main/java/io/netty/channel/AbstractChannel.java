@@ -974,11 +974,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
         /**
          * IMPORTANT: 刷新buffer队列
+         *
+         * flush-trace-1
          */
         @Override
         public final void flush() {
             assertEventLoop();
 
+            // 获取缓冲队列
             ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
             if (outboundBuffer == null) {
                 return;
@@ -1001,6 +1004,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             flush0();
         }
 
+        /**
+         * flush-trace-2
+         */
         @SuppressWarnings("deprecation")
         protected void flush0() {
             if (inFlush0) {
@@ -1031,6 +1037,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+                /**
+                 * flush-trace-3
+                 */
                 doWrite(outboundBuffer);
             } catch (Throwable t) {
                 if (t instanceof IOException && config().isAutoClose()) {

@@ -366,6 +366,14 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
         return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead());
     }
 
+    /**
+     * 调用JDK底层API写数据
+     * flush-trace-5
+     * {@link io.netty.buffer.PooledDirectByteBuf#readBytes(java.nio.channels.GatheringByteChannel, int)}
+     * @param buf           the {@link ByteBuf} from which the bytes should be written
+     * @return
+     * @throws Exception
+     */
     @Override
     protected int doWriteBytes(ByteBuf buf) throws Exception {
         final int expectedWrittenBytes = buf.readableBytes();

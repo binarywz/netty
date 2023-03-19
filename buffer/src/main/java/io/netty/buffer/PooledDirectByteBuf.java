@@ -216,6 +216,17 @@ final class PooledDirectByteBuf extends PooledByteBuf<ByteBuffer> {
         return getBytes(index, out, length, false);
     }
 
+    /**
+     * 写数据
+     *
+     * flush-trace-7
+     * @param index
+     * @param out
+     * @param length
+     * @param internal
+     * @return
+     * @throws IOException
+     */
     private int getBytes(int index, GatheringByteChannel out, int length, boolean internal) throws IOException {
         checkIndex(index, length);
         if (length == 0) {
@@ -230,6 +241,7 @@ final class PooledDirectByteBuf extends PooledByteBuf<ByteBuffer> {
         }
         index = idx(index);
         tmpBuf.clear().position(index).limit(index + length);
+        // 调用JDK API写数据
         return out.write(tmpBuf);
     }
 
@@ -250,6 +262,15 @@ final class PooledDirectByteBuf extends PooledByteBuf<ByteBuffer> {
         return out.write(tmpBuf, position);
     }
 
+    /**
+     * 向JDK底层Socket写数据
+     *
+     * flush-trace-6
+     * @param out -> JDK底层Channel
+     * @param length
+     * @return
+     * @throws IOException
+     */
     @Override
     public int readBytes(GatheringByteChannel out, int length) throws IOException {
         checkReadableBytes(length);

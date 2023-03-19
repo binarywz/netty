@@ -155,6 +155,11 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
         }
     }
 
+    /**
+     * flush-trace-4
+     * @param in
+     * @throws Exception
+     */
     @Override
     protected void doWrite(ChannelOutboundBuffer in) throws Exception {
         int writeSpinCount = -1;
@@ -186,13 +191,16 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
                     writeSpinCount = config().getWriteSpinCount();
                 }
                 for (int i = writeSpinCount - 1; i >= 0; i --) {
+                    // 真正数据
                     int localFlushedAmount = doWriteBytes(buf);
+                    // JDK底层此时不可写
                     if (localFlushedAmount == 0) {
                         setOpWrite = true;
                         break;
                     }
 
                     flushedAmount += localFlushedAmount;
+                    // 若buf不可读，则表示buf中的所有数据都已写入Socket
                     if (!buf.isReadable()) {
                         done = true;
                         break;

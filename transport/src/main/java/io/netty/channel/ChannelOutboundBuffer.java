@@ -63,8 +63,10 @@ public final class ChannelOutboundBuffer {
     // Entry(flushedEntry) --> ... Entry(unflushedEntry) --> ... Entry(tailEntry)
     //
     // The Entry that is the first in the linked-list structure that was flushed
+    // 调用JDK底层第一个写的数据
     private Entry flushedEntry;
     // The Entry which is the first unflushed in the linked-list structure
+    // 调用JDK底层第一个不写的数据
     private Entry unflushedEntry;
     // The Entry which represents the tail of the buffer
     private Entry tailEntry;
@@ -219,6 +221,7 @@ public final class ChannelOutboundBuffer {
      * Return the current message to write or {@code null} if nothing was flushed before and so is ready to be written.
      */
     public Object current() {
+        // flushedEntry: 第一个要写的数据节点
         Entry entry = flushedEntry;
         if (entry == null) {
             return null;

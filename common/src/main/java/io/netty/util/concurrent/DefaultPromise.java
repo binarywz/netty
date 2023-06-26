@@ -52,23 +52,31 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
                                                                                   Object.class, "result") : updater;
     }
 
+    // 保存结果
     private volatile Object result;
+    // 执行任务的线程池，promise持有executor的引用
     private final EventExecutor executor;
     /**
      * One or more listeners. Can be a {@link GenericFutureListener} or a {@link DefaultFutureListeners}.
      * If {@code null}, it means either 1) no listeners were added yet or 2) all listeners were notified.
      *
      * Threading - synchronized(this). We must support adding listeners when there is no EventExecutor.
+     *
+     * 监听者，回调函数，任务结束后(正常或异常结束)执行
      */
     private Object listeners;
     /**
      * Threading - synchronized(this). We are required to hold the monitor to use Java's underlying wait()/notifyAll().
+     *
+     * 等待这个promise的线程数(等待sync()/await()进行等待的线程数量)
      */
     private short waiters;
 
     /**
      * Threading - synchronized(this). We must prevent concurrent notification and FIFO listener notification if the
      * executor changes.
+     *
+     * 是否正在唤醒等待线程，用于防止重复执行唤醒，不然会重复执行listeners的回调方法
      */
     private boolean notifyingListeners;
 
